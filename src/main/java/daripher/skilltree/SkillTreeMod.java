@@ -5,6 +5,7 @@ import daripher.skilltree.compat.attributeslib.AttributesLibCompatibility;
 import daripher.skilltree.config.ClientConfig;
 import daripher.skilltree.config.ServerConfig;
 import daripher.skilltree.init.*;
+import daripher.skilltree.network.ModNetwork;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -40,6 +41,7 @@ public class SkillTreeMod {
     PSTEnchantments.REGISTRY.register(eventBus);
     PSTNumericValueProviders.REGISTRY.register(eventBus);
     PSTPotions.REGISTRY.register(eventBus);
+    ModNetwork.register();
     ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
     ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
     ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, daripher.skilltree.config.ModConfig.COMMON_SPEC, "skilltree-common.toml");
