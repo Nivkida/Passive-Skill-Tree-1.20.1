@@ -28,8 +28,8 @@ public class RequestSkillTreeOpenPacket {
         if (player == null) return;
 
         ctx.get().enqueueWork(() -> {
-            CompoundTag persisted = player.getPersistentData().getCompound("PlayerPersisted");
-            String selectedClass = persisted.getString("selected_class");
+            CompoundTag data = player.getPersistentData();
+            String selectedClass = data.getString("selected_class");
 
             if (selectedClass == null || selectedClass.isEmpty()) {
                 player.displayClientMessage(Component.literal("Вы не выбрали класс!")
@@ -46,17 +46,14 @@ public class RequestSkillTreeOpenPacket {
                 return;
             }
 
-            ResourceLocation treeId;
             try {
-                treeId = new ResourceLocation(treeStr);
+                ResourceLocation treeId = new ResourceLocation(treeStr);
+                ModNetwork.sendToClient(player, new OpenSkillTreePacket(treeId));
             } catch (Exception e) {
                 player.displayClientMessage(Component.literal("Некорректный идентификатор дерева навыков: " + treeStr)
                         .withStyle(ChatFormatting.DARK_RED), false);
                 LOGGER.warn("Invalid skill tree ID: {}", treeStr, e);
-                return;
             }
-
-            ModNetwork.sendToClient(player, new OpenSkillTreePacket(treeId));
         });
 
         ctx.get().setPacketHandled(true);
