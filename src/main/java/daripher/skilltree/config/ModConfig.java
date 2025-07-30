@@ -33,7 +33,7 @@ public class ModConfig {
 
             rawClassToTree = builder
                     .comment("Example: {\"assassin\": \"skilltree:assassin_tree\", \"mage\": \"skilltree:mage_tree\"}")
-                    .define("classToTree", "{\"assassin\": \"skilltree:assassin_tree\", \"mage\": \"skilltree:mage_tree\"}");
+                    .define("classToTree", "{\"assasin\": \"skilltree:main_tree\", \"wizard\": \"skilltree:mage_tree\"}");
 
             builder.pop();
         }

@@ -26,6 +26,9 @@ public class PSTAttributes {
   public static final RegistryObject<Attribute> STRENGTH = create("strength", 0d, 1000d);
   public static final RegistryObject<Attribute> DEXTERITY = create("dexterity", 0d, 1000d);
   public static final RegistryObject<Attribute> INTELLIGENCE = create("intelligence", 0d, 1000d);
+  public static final RegistryObject<Attribute> EVASION = create("evasion", 90d);
+  public static final RegistryObject<Attribute> BLOCKING = create("blocking", 90d);
+  public static final RegistryObject<Attribute> STEALTH = create("stealth", 90d);
 
   private static RegistryObject<Attribute> create(String name, double maxValue) {
     return create(name, 0, maxValue);
@@ -37,6 +40,7 @@ public class PSTAttributes {
         name,
         () -> new RangedAttribute(descriptionId, minValue, minValue, maxValue).setSyncable(true));
   }
+
 
   @SubscribeEvent
   public static void attachAttributes(EntityAttributeModificationEvent event) {

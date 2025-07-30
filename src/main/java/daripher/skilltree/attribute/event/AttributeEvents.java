@@ -2,12 +2,28 @@ package daripher.skilltree.attribute.event;
 
 import daripher.skilltree.SkillTreeMod;
 import daripher.skilltree.config.ServerConfig;
+import daripher.skilltree.entity.player.PlayerHelper;
 import daripher.skilltree.init.PSTAttributes;
+import daripher.skilltree.mixin.LivingEntityAccessor;
+import daripher.skilltree.skill.bonus.EventListenerBonus;
+import daripher.skilltree.skill.bonus.SkillBonus;
+import daripher.skilltree.skill.bonus.SkillBonusHandler;
 import daripher.skilltree.skill.bonus.condition.item.EquipmentCondition;
+import daripher.skilltree.skill.bonus.event.EvasionEventListener;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.event.GrindstoneEvent;
 import net.minecraftforge.event.TickEvent.Phase;
 import net.minecraftforge.event.TickEvent.PlayerTickEvent;
@@ -27,6 +43,95 @@ public class AttributeEvents {
         && event.player.tickCount % 20 == 0) {
       event.player.heal(lifeRegeneration);
       event.player.getFoodData().addExhaustion(lifeRegeneration / 5);
+    }
+  }
+
+  @SubscribeEvent
+  public static void applyEvasionBonus(LivingAttackEvent event) {
+    if (!(event.getEntity() instanceof Player player)) return;
+
+    DamageSource damageSource = event.getSource();
+    // Используем getDirectEntity() вместо getEntity()
+    if (!(damageSource.getDirectEntity() instanceof LivingEntity attacker)) return;
+
+    double evasion = player.getAttributeValue(PSTAttributes.EVASION.get());
+    // Добавляем защиту от отрицательных значений
+    if (evasion <= 0) return;
+
+    double evasionChance = (evasion * 0.05) / (1 + evasion * 0.05) * 0.8;
+    if (!(player.getRandom().nextFloat() < evasionChance)) return;
+
+    // Исправляем получение уровня и воспроизведение звука
+    player.level().playSound(
+            null,
+            player.getX(),
+            player.getY(),
+            player.getZ(),
+            SoundEvents.ENDER_DRAGON_FLAP,
+            SoundSource.PLAYERS,
+            0.5F,
+            1.5F
+    );
+
+    event.setCanceled(true);
+
+    // Убираем лишний параметр и копирование бонуса
+    for (EventListenerBonus<?> bonus :
+            SkillBonusHandler.getSkillBonuses(player, EventListenerBonus.class)) {
+      if (!(bonus.getEventListener() instanceof EvasionEventListener listener)) continue;
+      listener.onEvent(player, attacker, bonus);
+    }
+  }
+
+  @SubscribeEvent
+  public static void applyBlockingBonus(LivingAttackEvent event) {
+    if (!(event.getEntity() instanceof Player player)) return;
+    float damage = event.getAmount();
+    if (damage <= 0) return;
+    DamageSource damageSource = event.getSource();
+
+    // Исправление 1: Используем систему тегов для проверки игнорирования брони
+    if (damageSource.is(DamageTypeTags.BYPASSES_ARMOR)) return;
+
+    Entity attacker = damageSource.getDirectEntity();
+    if (attacker instanceof AbstractArrow arrow && arrow.getPierceLevel() > 0) return;
+
+    ItemStack shield = player.getOffhandItem();
+    if (!shield.is(Tags.Items.TOOLS_SHIELDS)) return;
+
+    double blocking = player.getAttributeValue(PSTAttributes.BLOCKING.get());
+    double blockChance = (blocking * 0.05) / (1 + blocking * 0.05) * 0.8;
+    if (player.getRandom().nextFloat() >= blockChance) return;
+
+    ShieldBlockEvent blockEvent = ForgeHooks.onShieldBlock(player, damageSource, damage);
+    if (blockEvent.isCanceled()) return;
+
+    event.setCanceled(true);
+
+    // Исправление 2: Используем level() вместо приватного поля level
+    player.level().broadcastEntityEvent(player, (byte) 29);
+
+    if (blockEvent.shieldTakesDamage()) {
+      PlayerHelper.hurtShield(player, shield, damage);
+    }
+
+    // Исправление 3: Проверка проектильного урона через теги
+    if (damageSource.is(DamageTypeTags.IS_PROJECTILE)) return;
+
+    if (!(attacker instanceof LivingEntity livingAttacker)) return;
+    LivingEntityAccessor entityAccessor = (LivingEntityAccessor) player;
+    entityAccessor.invokeBlockUsingShield(livingAttacker);
+  }
+
+  @SubscribeEvent
+  public static void applyStealthBonus(LivingChangeTargetEvent event) {
+    if (!(event.getNewTarget() instanceof Player player)) return;
+    double stealth = player.getAttributeValue(PSTAttributes.STEALTH.get()) / 100d;
+    if (stealth == 0) return;
+    LivingEntity attacker = event.getEntity();
+    double followRange = attacker.getAttributeValue(Attributes.FOLLOW_RANGE);
+    if (attacker.distanceTo(player) > followRange * (1 - stealth)) {
+      event.setCanceled(true);
     }
   }
 

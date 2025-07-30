@@ -63,19 +63,27 @@ public class SkillTreeWidgets extends WidgetGroup<AbstractWidget> {
     progressBar = new ProgressBar(width / 2 - 235 / 2, height - 17, b -> toggleProgressDisplayMode());
     progressBar.showProgressInNumbers = showProgressInNumbers;
     addWidget(progressBar);
+
     addTopWidgets();
+
+    // Настройка видимости после создания всех виджетов
     if (!ServerConfig.enable_exp_exchange) {
       progressBar.visible = false;
-      buyButton.visible = false;
+      if (buyButton != null) {
+        buyButton.visible = false;
+        buyButton.active = false;
+      }
     }
+
     statsInfo = new ScrollableComponentList(48, height - 60);
     statsInfo.setComponents(getMergedSkillBonusesTooltips());
     addWidget(statsInfo);
+
     startingPoints.clear();
     skills.getWidgets()
-        .stream()
-        .filter(button -> button.skill.isStartingPoint())
-        .forEach(startingPoints::add);
+            .stream()
+            .filter(button -> button.skill.isStartingPoint())
+            .forEach(startingPoints::add);
     highlightSkills();
     updateSearch();
   }
@@ -83,12 +91,21 @@ public class SkillTreeWidgets extends WidgetGroup<AbstractWidget> {
   @Override
   protected void renderWidget(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
     updateBuyPointButton();
-    Style pointsStyle = Style.EMPTY.withColor(0xFCE266);
-    Component pointsLeft = Component.literal("" + skillPoints)
-        .withStyle(pointsStyle);
-    pointsInfo.setMessage(Component.translatable("widget.skill_points_left", pointsLeft));
-    statsInfo.setX(width - statsInfo.getWidth() - 10);
-    statsInfo.visible = showStats;
+
+    // Защита от NPE для pointsInfo
+    if (pointsInfo != null) {
+      Style pointsStyle = Style.EMPTY.withColor(0xFCE266);
+      Component pointsLeft = Component.literal("" + skillPoints)
+              .withStyle(pointsStyle);
+      pointsInfo.setMessage(Component.translatable("widget.skill_points_left", pointsLeft));
+    }
+
+    // Защита от NPE для statsInfo
+    if (statsInfo != null) {
+      statsInfo.setX(width - statsInfo.getWidth() - 10);
+      statsInfo.visible = showStats;
+    }
+
     super.renderWidget(graphics, mouseX, mouseY, partialTick);
   }
 
@@ -125,8 +142,8 @@ public class SkillTreeWidgets extends WidgetGroup<AbstractWidget> {
     for (SkillButton button : skills.getWidgets()) {
       for (MutableComponent component : button.getSkillTooltip(skillTree)) {
         if (component.getString()
-            .toLowerCase()
-            .contains(search.toLowerCase())) {
+                .toLowerCase()
+                .contains(search.toLowerCase())) {
           button.searched = true;
           continue outerLoop;
         }
@@ -137,7 +154,7 @@ public class SkillTreeWidgets extends WidgetGroup<AbstractWidget> {
 
   private void playButtonSound() {
     SoundManager soundManager = Minecraft.getInstance()
-        .getSoundManager();
+            .getSoundManager();
     SimpleSoundInstance sound = SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1f);
     soundManager.play(sound);
   }
@@ -150,21 +167,21 @@ public class SkillTreeWidgets extends WidgetGroup<AbstractWidget> {
     }
     if (learnedSkills.size() + newlyLearnedSkills.size() >= ServerConfig.max_skill_points) return;
     skills.getSkillConnections()
-        .forEach(connection -> {
-          SkillButton button1 = connection.getFirstButton();
-          SkillButton button2 = connection.getSecondButton();
-          if (button1.skillLearned == button2.skillLearned) return;
-          if (connection.getType() != SkillConnection.Type.ONE_WAY) {
-            if (!button1.skillLearned && canLearnSkill(button1.skill)) {
-              button1.setCanLearn();
-              button1.setActive();
-            }
-          }
-          if (!button2.skillLearned && canLearnSkill(button2.skill)) {
-            button2.setCanLearn();
-            button2.setActive();
-          }
-        });
+            .forEach(connection -> {
+              SkillButton button1 = connection.getFirstButton();
+              SkillButton button2 = connection.getSecondButton();
+              if (button1.skillLearned == button2.skillLearned) return;
+              if (connection.getType() != SkillConnection.Type.ONE_WAY) {
+                if (!button1.skillLearned && canLearnSkill(button1.skill)) {
+                  button1.setCanLearn();
+                  button1.setActive();
+                }
+              }
+              if (!button2.skillLearned && canLearnSkill(button2.skill)) {
+                button2.setCanLearn();
+                button2.setActive();
+              }
+            });
   }
 
   private void addTopWidgets() {
@@ -179,42 +196,62 @@ public class SkillTreeWidgets extends WidgetGroup<AbstractWidget> {
     buttonWidth = Math.max(buttonWidth, font.width(cancelButtonText));
     buttonWidth += 20;
     int buttonsY = 8;
+
+    // Всегда создаем showStatsButton
     Button showStatsButton = new Button(width - buttonWidth - 8, buttonsY, buttonWidth, 14, showStatsButtonText);
     showStatsButton.setPressFunc(b -> showStats ^= true);
     addWidget(showStatsButton);
+
+    // Всегда создаем searchField
     searchField = new TextField(8, buttonsY, buttonWidth, 14, search);
     addWidget(searchField).setHint("Search...")
-        .setResponder(s -> {
-          search = s;
-          updateSearch();
-        });
+            .setResponder(s -> {
+              search = s;
+              updateSearch();
+            });
+
+    // Всегда создаем buyButton
     buyButton = new Button(width / 2 - 8 - buttonWidth, buttonsY, buttonWidth, 14, buyButtonText);
     buyButton.setPressFunc(b -> buySkillPoint());
     addWidget(buyButton);
+
+    // Всегда создаем pointsInfo
     pointsInfo = new Label(width / 2 + 8, buttonsY, buttonWidth, 14, Component.empty());
+
+    // Настройка позиции для отключенного обмена опыта
     if (!ServerConfig.enable_exp_exchange) {
       pointsInfo.setX(width / 2 - buttonWidth / 2);
     }
+
     addWidget(pointsInfo);
+
     buttonsY += 20;
+
+    // Всегда создаем confirmButton
     Button confirmButton = new Button(width / 2 - 8 - buttonWidth, buttonsY, buttonWidth, 14, confirmButtonText);
     confirmButton.setPressFunc(b -> confirmLearnSkills());
     addWidget(confirmButton);
+
+    // Всегда создаем cancelButton
     Button cancelButton = new Button(width / 2 + 8, buttonsY, buttonWidth, 14, cancelButtonText);
     cancelButton.setPressFunc(b -> cancelLearnSkills());
     addWidget(cancelButton);
-    confirmButton.active = cancelButton.active = !newlyLearnedSkills.isEmpty();
+
+    // Настройка активности кнопок с защитой
+    if (confirmButton != null && cancelButton != null) {
+      confirmButton.active = cancelButton.active = !newlyLearnedSkills.isEmpty();
+    }
   }
 
   private static void addToMergeList(SkillBonus<?> b, List<SkillBonus<?>> bonuses) {
     Optional<SkillBonus<?>> same = bonuses.stream()
-        .filter(b::canMerge)
-        .findAny();
+            .filter(b::canMerge)
+            .findAny();
     if (same.isPresent()) {
       bonuses.remove(same.get());
       bonuses.add(same.get()
-                      .copy()
-                      .merge(b));
+              .copy()
+              .merge(b));
     }
     else {
       bonuses.add(b);
@@ -232,11 +269,11 @@ public class SkillTreeWidgets extends WidgetGroup<AbstractWidget> {
 
   private long getLearnedSkillsWithTag(String tag) {
     return Streams.concat(learnedSkills.stream(), newlyLearnedSkills.stream())
-        .map(SkillsReloader::getSkillById)
-        .filter(Objects::nonNull)
-        .filter(skill -> skill.getTags()
-            .contains(tag))
-        .count();
+            .map(SkillsReloader::getSkillById)
+            .filter(Objects::nonNull)
+            .filter(skill -> skill.getTags()
+                    .contains(tag))
+            .count();
   }
 
   private void confirmLearnSkills() {
@@ -272,7 +309,7 @@ public class SkillTreeWidgets extends WidgetGroup<AbstractWidget> {
   private int getCurrentLevel() {
     IPlayerSkills capability = PlayerSkillsProvider.get(player);
     int learnedSkills = capability.getPlayerSkills()
-        .size();
+            .size();
     int skillPoints = capability.getSkillPoints();
     return learnedSkills + skillPoints;
   }
@@ -282,7 +319,7 @@ public class SkillTreeWidgets extends WidgetGroup<AbstractWidget> {
     if (!newlyLearnedSkills.isEmpty()) {
       int lastLearned = newlyLearnedSkills.size() - 1;
       if (newlyLearnedSkills.get(lastLearned)
-          .equals(skill.getId())) {
+              .equals(skill.getId())) {
         skillPoints++;
         newlyLearnedSkills.remove(lastLearned);
         rebuildWidgets();
@@ -298,7 +335,7 @@ public class SkillTreeWidgets extends WidgetGroup<AbstractWidget> {
     ResourceLocation connectedTree = skill.getConnectedTreeId();
     if (connectedTree != null) {
       Minecraft.getInstance()
-          .setScreen(new SkillTreeScreen(connectedTree));
+              .setScreen(new SkillTreeScreen(connectedTree));
     }
   }
 
@@ -309,41 +346,47 @@ public class SkillTreeWidgets extends WidgetGroup<AbstractWidget> {
   }
 
   protected void updateBuyPointButton() {
+    // Ключевое исправление: защита от NPE
+    if (buyButton == null) return;
+
     int currentLevel = getCurrentLevel();
     buyButton.active = false;
+
     if (isMaxLevel(currentLevel)) return;
+
     int pointCost = ServerConfig.getSkillPointCost(currentLevel);
     buyButton.active = player.totalExperience >= pointCost;
   }
 
-
   private void toggleProgressDisplayMode() {
-    progressBar.showProgressInNumbers ^= true;
-    showProgressInNumbers ^= true;
+    if (progressBar != null) {
+      progressBar.showProgressInNumbers ^= true;
+      showProgressInNumbers ^= true;
+    }
   }
 
   private void readPlayerData(LocalPlayer player) {
     IPlayerSkills capability = PlayerSkillsProvider.get(player);
     List<PassiveSkill> skills = capability.getPlayerSkills();
     skills.stream()
-        .map(PassiveSkill::getId)
-        .forEach(learnedSkills::add);
+            .map(PassiveSkill::getId)
+            .forEach(learnedSkills::add);
     skillPoints = capability.getSkillPoints();
   }
 
   private List<Component> getMergedSkillBonusesTooltips() {
     List<SkillBonus<?>> bonuses = new ArrayList<>();
     learnedSkills.stream()
-        .map(skills::getWidgetById)
-        .map(button -> button.skill)
-        .map(PassiveSkill::getBonuses)
-        .flatMap(List::stream)
-        .forEach(b -> addToMergeList(b, bonuses));
+            .map(skills::getWidgetById)
+            .map(button -> button.skill)
+            .map(PassiveSkill::getBonuses)
+            .flatMap(List::stream)
+            .forEach(b -> addToMergeList(b, bonuses));
     return bonuses.stream()
-        .sorted()
-        .map(SkillBonus::getTooltip)
-        .map(Component.class::cast)
-        .toList();
+            .sorted()
+            .map(SkillBonus::getTooltip)
+            .map(Component.class::cast)
+            .toList();
   }
 
   public void updateSkillPoints(int skillPoints) {

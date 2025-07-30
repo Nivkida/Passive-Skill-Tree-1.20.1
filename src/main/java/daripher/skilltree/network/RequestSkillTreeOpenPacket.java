@@ -16,12 +16,13 @@ import java.util.function.Supplier;
 
 public class RequestSkillTreeOpenPacket {
     public RequestSkillTreeOpenPacket() {}
-
     public RequestSkillTreeOpenPacket(FriendlyByteBuf buf) {}
-
     public void toBytes(FriendlyByteBuf buf) {}
 
     private static final Logger LOGGER = LogUtils.getLogger();
+
+    // Укажи здесь ID дерева навыков по умолчанию (например: "skilltree:default_tree")
+    private static final ResourceLocation DEFAULT_TREE = new ResourceLocation("skilltree", "default_tree");
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ServerPlayer player = ctx.get().getSender();
@@ -31,15 +32,20 @@ public class RequestSkillTreeOpenPacket {
             CompoundTag data = player.getPersistentData();
             String selectedClass = data.getString("selected_class");
 
+            Map<String, String> mapping = ModConfig.COMMON.getClassToTree();
+            String treeStr;
+
+            // Если класс не выбран, открываем дерево по умолчанию
             if (selectedClass == null || selectedClass.isEmpty()) {
-                player.displayClientMessage(Component.literal("Вы не выбрали класс!")
-                        .withStyle(ChatFormatting.RED), false);
+                player.displayClientMessage(Component.literal("Класс не выбран. Открыто дерево по умолчанию.")
+                        .withStyle(ChatFormatting.GRAY), false);
+                ModNetwork.sendToClient(player, new OpenSkillTreePacket(DEFAULT_TREE));
+                ctx.get().setPacketHandled(true);
                 return;
             }
 
-            Map<String, String> mapping = ModConfig.COMMON.getClassToTree();
-            String treeStr = mapping.get(selectedClass);
-
+            // Иначе ищем дерево по классу
+            treeStr = mapping.get(selectedClass);
             if (treeStr == null || treeStr.isEmpty()) {
                 player.displayClientMessage(Component.literal("Для класса \"" + selectedClass + "\" не найдено дерево навыков.")
                         .withStyle(ChatFormatting.RED), false);
@@ -59,4 +65,3 @@ public class RequestSkillTreeOpenPacket {
         ctx.get().setPacketHandled(true);
     }
 }
-

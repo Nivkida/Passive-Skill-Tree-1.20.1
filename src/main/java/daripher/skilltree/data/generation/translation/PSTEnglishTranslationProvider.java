@@ -453,6 +453,16 @@ public class PSTEnglishTranslationProvider extends PSTTranslationProvider {
     addInfo(PSTAttributes.STRENGTH.get(), "By default, 1 Strength grants +1% Melee Damage");
     add(PSTAttributes.INTELLIGENCE.get(), "Intelligence");
     addInfo(PSTAttributes.INTELLIGENCE.get(), "By default, 1 Intelligence grants +1% Magic Damage");
+    add(PSTAttributes.REGENERATION.get(), "Life Regeneration");
+    add(PSTAttributes.EVASION.get(), "Evasion");
+    add(PSTAttributes.BLOCKING.get(), "Blocking");
+    add(
+            PSTAttributes.BLOCKING.get().getDescriptionId() + ".info",
+            "(Blocking grants a chance to block damage from some attacks, requires a shield)");
+    add(PSTAttributes.STEALTH.get(), "Stealth");
+    add(
+            PSTAttributes.STEALTH.get().getDescriptionId() + ".info",
+            "(Stealth reduces monsters aggression range)");
     // effects
     add(PSTMobEffects.LIQUID_FIRE.get(), "Liquid Fire");
     // potions

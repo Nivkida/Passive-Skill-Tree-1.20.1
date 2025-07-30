@@ -393,6 +393,18 @@ public class PSTRussianTranslationProvider extends PSTTranslationProvider {
     addInfo(PSTAttributes.STRENGTH.get(), "По умолчанию, 1 сила дарует +1% к урону в ближнем бою");
     add(PSTAttributes.INTELLIGENCE.get(), "Интеллект");
     addInfo(PSTAttributes.INTELLIGENCE.get(), "По умолчанию, 1 интеллект дарует +1% к урону магией");
+    add(PSTAttributes.EVASION.get(), "Уклонение");
+    add(
+            PSTAttributes.EVASION.get().getDescriptionId() + ".info",
+            "(Уклонение дает шанс избежать урон некоторых атак)");
+    add(PSTAttributes.BLOCKING.get(), "Блокирование");
+    add(
+            PSTAttributes.BLOCKING.get().getDescriptionId() + ".info",
+            "(Блокирование дает шанс заблокировать урон некоторых атак, требует щит)");
+    add(PSTAttributes.STEALTH.get(), "Скрытность");
+    add(
+            PSTAttributes.STEALTH.get().getDescriptionId() + ".info",
+            "(Скрытность снижает дальность агрессии монстров)");
     // effects
     add(PSTMobEffects.LIQUID_FIRE.get(), "Жидкий огонь");
     // potions
