@@ -1,0 +1,5 @@
+// 1.20.1	2024-09-15T14:40:30.8815067	Global Loot Modifiers : skilltree
+42900810c501d3248cce928106bf1e192a124c9c data/forge/loot_modifiers/global_loot_modifiers.json
+d5d6692eacc5b4b382819b13030cb3185c078fa9 data/skilltree/loot_modifiers/creepers_ancient_vines.json
+56d8e90936ce11bb499a090ac2ec2a7b047cbc98 data/skilltree/loot_modifiers/endermen_ancient_eyes.json
+516bc35589486ada1e2220b069d9a06632373583 data/skilltree/loot_modifiers/zombie_piglins_ancient_gems.json
